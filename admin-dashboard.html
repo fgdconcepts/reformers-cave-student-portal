@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Admin Dashboard — Student Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root{--royal:#1a3a8f;--royal-dark:#0f2460;--royal-mid:#2351c4;--gold:#c9960c;--gold-light:#f0c040;
+    --gold-pale:#fdf3d0;--off-white:#f8f9ff;--text:#1a1a2e;--muted:#5a6380;--border:#d0d8f0;
+    --green:#16a34a;--red:#e53e3e;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--off-white);min-height:100vh;}
+
+  /* LOGIN */
+  .login-overlay{position:fixed;inset:0;z-index:100;
+    background:linear-gradient(135deg,var(--royal-dark),var(--royal));
+    display:flex;align-items:center;justify-content:center;padding:20px;}
+  .login-box{background:white;border-radius:24px;padding:52px 44px;max-width:420px;width:100%;
+    text-align:center;box-shadow:0 32px 80px rgba(0,0,0,.4);}
+  .login-box h2{font-family:'Playfair Display',serif;font-size:1.7rem;color:var(--royal);margin-bottom:8px;}
+  .login-box p{color:var(--muted);font-size:.88rem;margin-bottom:24px;}
+  .login-input{width:100%;height:52px;padding:0 18px;border:2px solid var(--border);border-radius:12px;
+    font-family:'DM Sans',sans-serif;font-size:1rem;letter-spacing:3px;text-align:center;
+    background:#f8f9ff;outline:none;transition:all .25s;margin-bottom:14px;}
+  .login-input:focus{border-color:var(--royal);background:white;box-shadow:0 0 0 4px rgba(26,58,143,.08);}
+  .login-btn{width:100%;height:50px;background:linear-gradient(135deg,var(--royal-dark),var(--royal-mid));
+    color:white;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:600;
+    border:none;border-radius:12px;cursor:pointer;transition:all .2s;}
+  .login-btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(26,58,143,.4);}
+  .login-error{color:var(--red);font-size:.82rem;font-weight:600;margin-bottom:12px;display:none;}
+  .login-note{margin-top:14px;font-size:.75rem;color:var(--muted);}
+
+  /* DASHBOARD */
+  .dashboard{display:none;padding:0;}
+  .top-bar{background:linear-gradient(135deg,var(--royal-dark),var(--royal));padding:20px 32px;
+    display:flex;align-items:center;justify-content:space-between;
+    box-shadow:0 4px 20px rgba(26,58,143,.3);}
+  .top-bar-left{display:flex;align-items:center;gap:14px;}
+  .top-bar h1{font-family:'Playfair Display',serif;font-size:1.4rem;color:white;}
+  .top-bar p{font-size:.78rem;color:rgba(255,255,255,.6);margin-top:2px;}
+  .top-bar-right{display:flex;gap:10px;}
+  .btn-export{padding:10px 20px;background:linear-gradient(135deg,var(--gold),var(--gold-light));
+    color:var(--royal-dark);font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:700;
+    border:none;border-radius:10px;cursor:pointer;transition:all .2s;}
+  .btn-export:hover{transform:translateY(-2px);}
+  .btn-refresh{padding:10px 16px;background:rgba(255,255,255,.15);color:white;
+    font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;
+    border:1px solid rgba(255,255,255,.3);border-radius:10px;cursor:pointer;transition:all .2s;}
+  .btn-refresh:hover{background:rgba(255,255,255,.25);}
+  .btn-logout{padding:10px 16px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);
+    font-family:'DM Sans',sans-serif;font-size:.82rem;border:1px solid rgba(255,255,255,.2);
+    border-radius:10px;cursor:pointer;}
+
+  .content{max-width:1200px;margin:0 auto;padding:32px 24px;}
+
+  /* STATS CARDS */
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:32px;}
+  .stat-card{background:white;border-radius:16px;padding:24px;box-shadow:0 4px 20px rgba(26,58,143,.08);
+    border-bottom:4px solid var(--gold);position:relative;overflow:hidden;}
+  .stat-card::before{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;
+    border-radius:50%;background:rgba(26,58,143,.04);}
+  .stat-num{font-family:'Playfair Display',serif;font-size:2.4rem;font-weight:900;color:var(--royal);}
+  .stat-label{font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px;}
+  .stat-icon{font-size:28px;margin-bottom:8px;}
+
+  /* SEARCH & FILTER */
+  .table-controls{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center;}
+  .search-input{flex:1;min-width:200px;height:44px;padding:0 16px 0 40px;border:1.5px solid var(--border);
+    border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.9rem;background:white;outline:none;transition:all .25s;}
+  .search-input:focus{border-color:var(--royal);box-shadow:0 0 0 3px rgba(26,58,143,.08);}
+  .search-wrap{position:relative;flex:1;}
+  .search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none;}
+  .filter-select{height:44px;padding:0 14px;border:1.5px solid var(--border);border-radius:10px;
+    font-family:'DM Sans',sans-serif;font-size:.85rem;background:white;outline:none;cursor:pointer;}
+  .results-count{font-size:.82rem;color:var(--muted);font-weight:600;white-space:nowrap;}
+
+  /* TABLE */
+  .table-wrap{background:white;border-radius:16px;box-shadow:0 4px 20px rgba(26,58,143,.08);overflow:hidden;}
+  .table-wrap table{width:100%;border-collapse:collapse;}
+  .table-wrap thead tr{background:var(--royal);}
+  .table-wrap thead th{padding:14px 16px;color:white;font-size:.78rem;font-weight:700;
+    text-transform:uppercase;letter-spacing:.5px;text-align:left;white-space:nowrap;}
+  .table-wrap tbody tr{border-bottom:1px solid var(--border);transition:background .15s;}
+  .table-wrap tbody tr:hover{background:#f0f4ff;}
+  .table-wrap tbody tr:nth-child(even){background:var(--gold-pale);}
+  .table-wrap tbody tr:nth-child(even):hover{background:#f0e8b0;}
+  .table-wrap td{padding:13px 16px;font-size:.85rem;color:var(--text);vertical-align:middle;}
+  .id-chip{background:var(--royal);color:white;font-size:.72rem;font-weight:700;
+    padding:3px 10px;border-radius:99px;font-family:'DM Sans',sans-serif;white-space:nowrap;}
+  .course-chip{background:#e8ecf8;color:var(--royal);font-size:.72rem;font-weight:600;
+    padding:3px 10px;border-radius:6px;white-space:nowrap;}
+  .photo-link{color:var(--royal);text-decoration:none;font-size:.8rem;font-weight:600;}
+  .photo-link:hover{text-decoration:underline;}
+  .no-data{text-align:center;padding:60px 20px;color:var(--muted);}
+  .no-data .icon{font-size:48px;margin-bottom:12px;}
+  .loading{text-align:center;padding:60px 20px;color:var(--muted);}
+  .loading .spinner{display:inline-block;width:36px;height:36px;border:3px solid var(--border);
+    border-top-color:var(--royal);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:12px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .error-box{background:#fff5f5;border:2px solid var(--red);border-radius:12px;padding:20px;
+    text-align:center;color:var(--red);margin:20px 0;}
+  .pagination{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;
+    border-top:1px solid var(--border);font-size:.82rem;color:var(--muted);}
+  .page-btns{display:flex;gap:8px;}
+  .page-btn{padding:6px 14px;border:1.5px solid var(--border);border-radius:8px;background:white;
+    cursor:pointer;font-size:.82rem;font-family:'DM Sans',sans-serif;transition:all .2s;}
+  .page-btn:hover{background:var(--royal);color:white;border-color:var(--royal);}
+  .page-btn.active{background:var(--royal);color:white;border-color:var(--royal);}
+
+  @media(max-width:768px){
+    .stats-grid{grid-template-columns:1fr 1fr;}
+    .top-bar{flex-direction:column;align-items:flex-start;gap:12px;}
+    .table-wrap{overflow-x:auto;}
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <div style="font-size:48px;margin-bottom:16px;">🛡️</div>
+    <h2>Admin Access</h2>
+    <p>Enter your username and password to access the dashboard</p>
+    <div class="login-error" id="loginError">❌ Incorrect username or password</div>
+    <input type="text" class="login-input" id="adminUser" placeholder="Username" maxlength="30" style="letter-spacing:0;margin-bottom:10px;"/>
+    <input type="password" class="login-input" id="adminInput" placeholder="Password" maxlength="30"/>
+    <button class="login-btn" onclick="adminLogin()">Access Dashboard →</button>
+    <div id="loggedInAs" style="margin-top:14px;font-size:.78rem;color:var(--muted);display:none;"></div>
+    <p class="login-note">This area is restricted to authorised administrators only.</p>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dashboard" id="dashboard">
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <div>
+        <h1>🎓 Student Portal — Admin Dashboard</h1>
+        <p id="lastRefresh">Loading data...</p>
+        <p id="topBarUser" style="font-size:.75rem;color:rgba(255,255,255,.5);margin-top:2px;"></p>
+      </div>
+    </div>
+    <div class="top-bar-right">
+      <button class="btn-refresh" onclick="loadData()">🔄 Refresh</button>
+      <button class="btn-export" onclick="exportCSV()">⬇️ Export CSV</button>
+      <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-num" id="statTotal">—</div>
+        <div class="stat-label">Total Students</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">👨</div>
+        <div class="stat-num" id="statMale">—</div>
+        <div class="stat-label">Male Students</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">👩</div>
+        <div class="stat-num" id="statFemale">—</div>
+        <div class="stat-label">Female Students</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📚</div>
+        <div class="stat-num" id="statCourses">—</div>
+        <div class="stat-label">Courses Enrolled</div>
+      </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="table-controls">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="searchInput" placeholder="Search by name, email, ID, course..." oninput="renderTable()"/>
+      </div>
+      <select class="filter-select" id="filterCourse" onchange="renderTable()">
+        <option value="">All Courses</option>
+      </select>
+      <select class="filter-select" id="filterGender" onchange="renderTable()">
+        <option value="">All Genders</option>
+        <option>Male</option><option>Female</option>
+      </select>
+      <span class="results-count" id="resultsCount"></span>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrap" id="tableWrap">
+      <div class="loading"><div class="spinner"></div><br>Loading student data...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  ⚙️  SETTINGS — Edit these
+// ═══════════════════════════════════════════════════════
+const SCRIPT_URL = 'https://script.googleusercontent.com/macros/echo?user_content_key=AY5xjrR6hM7TwR6sUWR0q8VAerhZ4ou6FDXY6ZOmiz2ElIC3e3QT_oDHyQ5V78_jKKXlicfHKJ_u4Z2NRGXI2RWQbX8p8S89YEXFT9G_7EnWf1oxQKrRdGyzQySNtxDs6nZWAhk9ikbm5GBVg2AauZNcYYNgEm3SyAh-wt6jOJk3vYQe2TPFtphvfXGR_buFMIXwuT4_D3tApnOSjpKfj2TXRKubbNDBj2nBQtF5bfLDDHIOWZBjn36aaun_6S1Sh6uusMtst__0t_nT4ZJu8s_HxAwi09NaIw&lib=MZ2V4PM7LD7RTqOtCaKp_KkVEmbAadUcX';
+const ADMIN_KEY  = 'ADMIN_SECRET_KEY_HERE'; // Must match Code.gs
+
+// ── UP TO 5 ADMINS — Add/remove/edit as needed ──
+// Format: { username: 'name', password: 'password', role: 'label' }
+const ADMINS = [
+  { username: 'admin1',  password: 'Password1Here',  role: 'Super Admin'    },
+  { username: 'admin2',  password: 'Password2Here',  role: 'Admin'          },
+  { username: 'admin3',  password: 'Password3Here',  role: 'Admin'          },
+  { username: 'admin4',  password: 'Password4Here',  role: 'Viewer'         },
+  { username: 'admin5',  password: 'Password5Here',  role: 'Viewer'         },
+];
+// ═══════════════════════════════════════════════════════
+
+let allStudents = [];
+let currentPage = 1;
+let currentAdmin = null;
+const PAGE_SIZE = 20;
+
+// LOGIN
+document.getElementById('adminUser').addEventListener('keydown',  e => { if(e.key==='Enter') document.getElementById('adminInput').focus(); });
+document.getElementById('adminInput').addEventListener('keydown', e => { if(e.key==='Enter') adminLogin(); });
+
+function adminLogin() {
+  const user = document.getElementById('adminUser').value.trim().toLowerCase();
+  const pass = document.getElementById('adminInput').value;
+  const match = ADMINS.find(a => a.username.toLowerCase() === user && a.password === pass);
+  if (match) {
+    currentAdmin = match;
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    document.getElementById('topBarUser').textContent = '👤 Logged in as: ' + match.username + ' (' + match.role + ')';
+    loadData();
+  } else {
+    document.getElementById('loginError').style.display = 'block';
+    document.getElementById('adminInput').value = '';
+    document.getElementById('adminUser').focus();
+  }
+}
+
+function logout() {
+  currentAdmin = null;
+  document.getElementById('loginOverlay').style.display = 'flex';
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('adminUser').value = '';
+  document.getElementById('adminInput').value = '';
+  document.getElementById('loginError').style.display = 'none';
+  document.getElementById('topBarUser').textContent = '';
+}
+
+// LOAD DATA FROM APPS SCRIPT
+async function loadData() {
+  document.getElementById('tableWrap').innerHTML = '<div class="loading"><div class="spinner"></div><br>Loading student data...</div>';
+  document.getElementById('lastRefresh').textContent = 'Loading...';
+  try {
+    const url = SCRIPT_URL + '?adminKey=' + encodeURIComponent(ADMIN_KEY);
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.status === 'unauthorized') {
+      document.getElementById('tableWrap').innerHTML = '<div class="error-box">❌ Unauthorized. Check your admin key.</div>';
+      return;
+    }
+    allStudents = data.students || [];
+    document.getElementById('lastRefresh').textContent = 'Last updated: ' + new Date().toLocaleString();
+    updateStats();
+    populateFilters();
+    renderTable();
+  } catch(err) {
+    document.getElementById('tableWrap').innerHTML = '<div class="error-box">❌ Could not load data. Make sure your Apps Script URL is set correctly.<br><small>' + err.message + '</small></div>';
+  }
+}
+
+function updateStats() {
+  document.getElementById('statTotal').textContent = allStudents.length;
+  document.getElementById('statMale').textContent = allStudents.filter(s => s['Gender'] === 'Male').length;
+  document.getElementById('statFemale').textContent = allStudents.filter(s => s['Gender'] === 'Female').length;
+  const courses = new Set(allStudents.map(s => s['Course / Program']).filter(Boolean));
+  document.getElementById('statCourses').textContent = courses.size;
+}
+
+function populateFilters() {
+  const courses = [...new Set(allStudents.map(s => s['Course / Program']).filter(Boolean))].sort();
+  const sel = document.getElementById('filterCourse');
+  sel.innerHTML = '<option value="">All Courses</option>';
+  courses.forEach(c => { const o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
+}
+
+function getFiltered() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const course = document.getElementById('filterCourse').value;
+  const gender = document.getElementById('filterGender').value;
+  return allStudents.filter(s => {
+    const matchQ = !q ||
+      (s['Full Name']||'').toLowerCase().includes(q) ||
+      (s['Email Address']||'').toLowerCase().includes(q) ||
+      (s['Student ID']||'').toLowerCase().includes(q) ||
+      (s['Course / Program']||'').toLowerCase().includes(q) ||
+      (s['Phone Number']||'').toLowerCase().includes(q);
+    const matchCourse = !course || s['Course / Program'] === course;
+    const matchGender = !gender || s['Gender'] === gender;
+    return matchQ && matchCourse && matchGender;
+  });
+}
+
+function renderTable() {
+  const filtered = getFiltered();
+  currentPage = 1;
+  document.getElementById('resultsCount').textContent = filtered.length + ' student' + (filtered.length !== 1 ? 's' : '');
+  renderPage(filtered);
+}
+
+function renderPage(filtered) {
+  const start = (currentPage-1)*PAGE_SIZE;
+  const page = filtered.slice(start, start+PAGE_SIZE);
+  const totalPages = Math.ceil(filtered.length/PAGE_SIZE);
+
+  if (filtered.length === 0) {
+    document.getElementById('tableWrap').innerHTML = '<div class="no-data"><div class="icon">🔍</div><p>No students found matching your search.</p></div>';
+    return;
+  }
+
+  let html = `<table>
+    <thead><tr>
+      <th>S/N</th><th>Student ID</th><th>Full Name</th><th>Gender</th>
+      <th>Date of Birth</th><th>Nationality</th><th>Phone</th><th>WhatsApp</th>
+      <th>Email</th><th>Course</th><th>Submitted</th><th>Photo</th>
+    </tr></thead><tbody>`;
+
+  page.forEach((s,i) => {
+    html += `<tr>
+      <td>${start+i+1}</td>
+      <td><span class="id-chip">${s['Student ID']||'—'}</span></td>
+      <td><strong>${s['Full Name']||'—'}</strong></td>
+      <td>${s['Gender']||'—'}</td>
+      <td>${s['Date of Birth']||'—'}</td>
+      <td>${s['Nationality']||'—'}</td>
+      <td>${s['Phone Number']||'—'}</td>
+      <td>${s['WhatsApp Number']||'—'}</td>
+      <td>${s['Email Address']||'—'}</td>
+      <td><span class="course-chip">${s['Course / Program']||'—'}</span></td>
+      <td style="font-size:.75rem;color:var(--muted)">${s['Timestamp']||'—'}</td>
+      <td>${s['Passport Photo (Link)'] ? '<a class="photo-link" href="'+s['Passport Photo (Link)']+'" target="_blank">📷 View</a>' : '—'}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+
+  // Pagination
+  html += `<div class="pagination">
+    <span>Showing ${start+1}–${Math.min(start+PAGE_SIZE,filtered.length)} of ${filtered.length}</span>
+    <div class="page-btns">`;
+  if (currentPage > 1) html += `<button class="page-btn" onclick="goPage(${currentPage-1},event)">← Prev</button>`;
+  for (let p=1;p<=totalPages;p++) {
+    if (p===1||p===totalPages||Math.abs(p-currentPage)<=1)
+      html += `<button class="page-btn${p===currentPage?' active':''}" onclick="goPage(${p},event)">${p}</button>`;
+    else if (Math.abs(p-currentPage)===2) html += `<span style="padding:6px 4px;color:var(--muted)">…</span>`;
+  }
+  if (currentPage < totalPages) html += `<button class="page-btn" onclick="goPage(${currentPage+1},event)">Next →</button>`;
+  html += `</div></div>`;
+
+  document.getElementById('tableWrap').innerHTML = html;
+}
+
+function goPage(p, e) {
+  e.preventDefault(); currentPage=p;
+  renderPage(getFiltered());
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// EXPORT CSV
+function exportCSV() {
+  if (!allStudents.length) { alert('No data to export.'); return; }
+  const headers = ['S/N','Student ID','Timestamp','Full Name','Gender','Date of Birth','Nationality','Home Address','Phone Number','WhatsApp Number','Email Address','Course / Program','Passport Photo (Link)'];
+  const rows = allStudents.map((s,i) => headers.map(h => {
+    const v = h==='S/N' ? i+1 : (s[h]||'');
+    return '"' + String(v).replace(/"/g,'""') + '"';
+  }));
+  const csv = [headers.map(h=>'"'+h+'"').join(','), ...rows.map(r=>r.join(','))].join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'students_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+</script>
+</body>
+</html>
